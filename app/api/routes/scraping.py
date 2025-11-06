@@ -9,6 +9,7 @@ from app.services.scraping_service import PlayStoreScraper
 from app.services.bert_classifier_service import get_bert_classifier
 from app.services.openrouter_service import get_requirements_generator
 from app.services.pdf_generator_service import get_pdf_generator
+from app.core.redis_client import get_redis_client
 import io
 
 router = APIRouter()
@@ -19,13 +20,50 @@ async def scrape_playstore_reviews(payload: ScrapingRequest):
     Endpoint para extraer, clasificar comentarios y generar requisitos No Funcionales.
 
     Proceso:
-    1. Extrae comentarios negativos de Play Store
-    2. Filtra comentarios relevantes usando modelo BERT binario
-    3. Clasifica comentarios relevantes usando modelo BERT multiclase (ISO 25010)
-    4. Genera requisitos No Funcionales usando Mistral (OpenRouter)
-    5. Retorna comentarios clasificados y requisitos generados
+    1. Verifica caché Redis (si disponible)
+    2. Extrae comentarios negativos de Play Store
+    3. Filtra comentarios relevantes usando modelo BERT binario
+    4. Clasifica comentarios relevantes usando modelo BERT multiclase (ISO 25010)
+    5. Genera requisitos No Funcionales usando Mistral (OpenRouter)
+    6. Almacena resultado en caché Redis
+    7. Retorna comentarios clasificados y requisitos generados
     """
     try:
+        # Obtener cliente Redis
+        redis_client = get_redis_client()
+
+        # Generar cache key basado en los parámetros de la petición
+        cache_key_data = {
+            "app_id": payload.app_id,
+            "max_reviews": payload.max_reviews,
+            "max_rating": payload.max_rating,
+            "criterios_busqueda": payload.criterios_busqueda,
+            "multiclass_model": payload.multiclass_model
+        }
+        cache_key = redis_client.generate_cache_key("scrape", cache_key_data)
+
+        # Intentar obtener del caché
+        cached_result = redis_client.get_cached(cache_key)
+        if cached_result:
+            print(f"\n{'='*60}")
+            print("⚡ RESULTADO OBTENIDO DESDE CACHÉ")
+            print(f"{'='*60}\n")
+
+            # Convertir datos cacheados a modelos Pydantic
+            reviews_data = [ReviewData(**r) for r in cached_result['reviews']]
+            requirements_data = None
+            if cached_result.get('requirements'):
+                requirements_data = RequirementsData(**cached_result['requirements'])
+
+            return ScrapingResponse(
+                success=True,
+                app_id=cached_result['app_id'],
+                total_reviews=cached_result['total_reviews'],
+                reviews=reviews_data,
+                stats=cached_result['stats'],
+                requirements=requirements_data,
+                from_cache=True
+            )
         # Paso 1: Scraping de comentarios
         print(f"\n{'='*60}")
         print("🚀 INICIANDO PROCESO DE SCRAPING Y CLASIFICACIÓN")
@@ -103,14 +141,22 @@ async def scrape_playstore_reviews(payload: ScrapingRequest):
         print("✅ PROCESO COMPLETO FINALIZADO")
         print(f"{'='*60}\n")
 
-        return ScrapingResponse(
-            success=True,
-            app_id=payload.app_id,
-            total_reviews=len(classified_reviews),
-            reviews=reviews_data,
-            stats=stats,
-            requirements=requirements_data
-        )
+        # Preparar respuesta
+        response_data = {
+            "success": True,
+            "app_id": payload.app_id,
+            "total_reviews": len(classified_reviews),
+            "reviews": [r.dict() if hasattr(r, 'dict') else r for r in reviews_data],
+            "stats": stats,
+            "requirements": requirements_data.dict() if requirements_data else None,
+            "from_cache": False
+        }
+
+        # Guardar en caché (TTL: 1 hora = 3600 segundos)
+        redis_client.set_cached(cache_key, response_data, ttl=3600)
+
+        # Convertir de nuevo a modelos Pydantic para la respuesta
+        return ScrapingResponse(**response_data)
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -122,14 +168,50 @@ async def classify_single_comment(payload: SingleCommentRequest):
     Endpoint para clasificar un solo comentario y generar un requisito si es relevante.
 
     Proceso:
-    1. Recibe un comentario individual
-    2. Aplica filtro binario (relevante vs no relevante)
-    3. Si es NO relevante → Retorna mensaje específico
-    4. Si es relevante → Aplica clasificación multiclase (ISO 25010)
-    5. Si es relevante → Genera requisito No Funcional con Mistral
-    6. Retorna resultado completo
+    1. Verifica caché Redis (si disponible)
+    2. Recibe un comentario individual
+    3. Aplica filtro binario (relevante vs no relevante)
+    4. Si es NO relevante → Retorna mensaje específico
+    5. Si es relevante → Aplica clasificación multiclase (ISO 25010)
+    6. Si es relevante → Genera requisito No Funcional con Mistral
+    7. Almacena resultado en caché Redis
+    8. Retorna resultado completo
     """
     try:
+        # Obtener cliente Redis
+        redis_client = get_redis_client()
+
+        # Generar cache key basado en el comentario y parámetros
+        cache_key_data = {
+            "comentario": payload.comentario,
+            "calificacion": payload.calificacion,
+            "multiclass_model": payload.multiclass_model
+        }
+        cache_key = redis_client.generate_cache_key("classify", cache_key_data)
+
+        # Intentar obtener del caché
+        cached_result = redis_client.get_cached(cache_key)
+        if cached_result:
+            print(f"\n{'='*60}")
+            print("⚡ RESULTADO OBTENIDO DESDE CACHÉ")
+            print(f"{'='*60}\n")
+
+            # Reconstruir requisito si existe
+            requisito_data = None
+            if cached_result.get('requisito'):
+                requisito_data = RequirementData(**cached_result['requisito'])
+
+            return SingleCommentResponse(
+                success=cached_result['success'],
+                es_relevante=cached_result['es_relevante'],
+                mensaje=cached_result['mensaje'],
+                comentario=cached_result['comentario'],
+                calificacion=cached_result['calificacion'],
+                categoria=cached_result.get('categoria'),
+                confianza=cached_result.get('confianza'),
+                requisito=requisito_data,
+                error=cached_result.get('error')
+            )
         print(f"\n{'='*60}")
         print("🔍 CLASIFICACIÓN DE COMENTARIO INDIVIDUAL")
         print(f"{'='*60}")
@@ -155,13 +237,19 @@ async def classify_single_comment(payload: SingleCommentRequest):
             print("⚠️  COMENTARIO NO RELEVANTE - Proceso finalizado")
             print(f"{'='*60}\n")
 
-            return SingleCommentResponse(
-                success=True,
-                es_relevante=False,
-                mensaje="El comentario no fue clasificado como relevante para requisitos de seguridad según ISO 25010. No se generó ningún requisito.",
-                comentario=payload.comentario,
-                calificacion=payload.calificacion
-            )
+            # Preparar respuesta para comentario no relevante
+            response_not_relevant = {
+                "success": True,
+                "es_relevante": False,
+                "mensaje": "El comentario no fue clasificado como relevante para requisitos de seguridad según ISO 25010. No se generó ningún requisito.",
+                "comentario": payload.comentario,
+                "calificacion": payload.calificacion
+            }
+
+            # Guardar en caché (TTL: 2 horas = 7200 segundos para comentarios no relevantes)
+            redis_client.set_cached(cache_key, response_not_relevant, ttl=7200)
+
+            return SingleCommentResponse(**response_not_relevant)
 
         # Paso 4: Si ES relevante, aplicar clasificación multiclase
         print(f"\n{'='*60}")
@@ -207,17 +295,33 @@ async def classify_single_comment(payload: SingleCommentRequest):
         print("✅ PROCESO COMPLETADO")
         print(f"{'='*60}\n")
 
+        # Preparar respuesta para comentario relevante
+        response_relevant = {
+            "success": True,
+            "es_relevante": True,
+            "mensaje": f"Comentario clasificado como relevante en la categoría '{categoria}' con {confianza:.2%} de confianza.",
+            "comentario": payload.comentario,
+            "calificacion": payload.calificacion,
+            "categoria": categoria,
+            "confianza": round(confianza, 4),
+            "requisito": requisito_data.dict() if requisito_data else None,
+            "error": error_message
+        }
+
+        # Guardar en caché (TTL: 1 hora = 3600 segundos para comentarios relevantes)
+        redis_client.set_cached(cache_key, response_relevant, ttl=3600)
+
         # Retornar respuesta completa
         return SingleCommentResponse(
-            success=True,
-            es_relevante=True,
-            mensaje=f"Comentario clasificado como relevante en la categoría '{categoria}' con {confianza:.2%} de confianza.",
-            comentario=payload.comentario,
-            calificacion=payload.calificacion,
-            categoria=categoria,
-            confianza=round(confianza, 4),
+            success=response_relevant["success"],
+            es_relevante=response_relevant["es_relevante"],
+            mensaje=response_relevant["mensaje"],
+            comentario=response_relevant["comentario"],
+            calificacion=response_relevant["calificacion"],
+            categoria=response_relevant["categoria"],
+            confianza=response_relevant["confianza"],
             requisito=requisito_data,
-            error=error_message
+            error=response_relevant["error"]
         )
 
     except Exception as e:
@@ -287,3 +391,56 @@ async def generate_requirements_pdf(payload: PDFGenerationRequest):
     except Exception as e:
         print(f"\n❌ ERROR al generar PDF: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al generar PDF: {str(e)}")
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """
+    Endpoint para obtener estadísticas del caché de Redis.
+
+    Returns:
+        Dict con estadísticas de uso del caché
+    """
+    try:
+        redis_client = get_redis_client()
+        stats = redis_client.get_stats()
+
+        return {
+            "success": True,
+            "cache_stats": stats
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al obtener estadísticas: {str(e)}")
+
+
+@router.delete("/cache/clear")
+async def clear_cache(pattern: str = "*"):
+    """
+    Endpoint para limpiar el caché de Redis.
+
+    Args:
+        pattern: Patrón de keys a eliminar (default: "*" para todo)
+                 Ejemplos: "scrape:*", "classify:*"
+
+    Returns:
+        Dict con resultado de la operación
+    """
+    try:
+        redis_client = get_redis_client()
+
+        if not redis_client.is_available():
+            return {
+                "success": False,
+                "message": "Redis no está disponible"
+            }
+
+        deleted_count = redis_client.clear_pattern(pattern)
+
+        return {
+            "success": True,
+            "message": f"Se eliminaron {deleted_count} keys del caché",
+            "deleted_count": deleted_count,
+            "pattern": pattern
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al limpiar caché: {str(e)}")

@@ -1,0 +1,9 @@
+Collecting redis
+  Downloading redis-7.0.1-py3-none-any.whl.metadata (12 kB)
+Collecting hiredis
+  Downloading hiredis-3.3.0-cp313-cp313-win_amd64.whl.metadata (7.7 kB)
+Downloading redis-7.0.1-py3-none-any.whl (339 kB)
+Downloading hiredis-3.3.0-cp313-cp313-win_amd64.whl (22 kB)
+Installing collected packages: redis, hiredis
+
+Successfully installed hiredis-3.3.0 redis-7.0.1

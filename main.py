@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import health, scraping
 from dotenv import load_dotenv
+import os
 
 # Cargar variables de entorno desde .env
 load_dotenv()
@@ -16,6 +17,8 @@ app = FastAPI(
 origins = [
     "http://localhost:4200",  # Angular development server
     "http://127.0.0.1:4200",  # Alternativa localhost
+    # Agrega aquí tu dominio de producción cuando lo tengas
+    # "https://tu-frontend.vercel.app",
 ]
 
 app.add_middleware(
@@ -37,4 +40,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

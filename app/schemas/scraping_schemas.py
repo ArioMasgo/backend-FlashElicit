@@ -79,6 +79,7 @@ class ScrapingResponse(BaseModel):
     reviews: List[ReviewData] = Field(..., description="Lista de comentarios negativos")
     stats: dict = Field(..., description="Estadísticas del proceso de scraping")
     requirements: Optional[RequirementsData] = Field(None, description="Requisitos No Funcionales generados (opcional)")
+    from_cache: bool = Field(default=False, description="Indica si el resultado proviene del caché de Redis")
 
 # ===== Schemas para clasificación de comentario individual =====
 
