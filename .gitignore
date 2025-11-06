@@ -1,0 +1,115 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+logs/
+
+# 🎯 MODELOS BERT (PESADOS - NO SUBIR)
+# Directorios de modelos completos
+app/models/modelo_bert_binario/
+app/models/modelo_bert_multiclase/
+
+# Archivos de modelos pesados
+*.bin
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Archivos de configuración y vocabularios grandes
+app/models/modelo_bert_binario/vocab.txt
+app/models/modelo_bert_binario/tokenizer.json
+app/models/modelo_bert_binario/tokenizer_config.json
+app/models/modelo_bert_binario/special_tokens_map.json
+app/models/modelo_bert_binario/config.json
+app/models/modelo_bert_binario/model.safetensors
+
+app/models/modelo_bert_multiclase/vocab.txt
+app/models/modelo_bert_multiclase/tokenizer.json
+app/models/modelo_bert_multiclase/tokenizer_config.json
+app/models/modelo_bert_multiclase/special_tokens_map.json
+app/models/modelo_bert_multiclase/config.json
+app/models/modelo_bert_multiclase/model.safetensors
+app/models/modelo_bert_multiclase/model_metadata.json
+
+# Cache de transformers/huggingface
+.cache/
+huggingface/
+transformers_cache/
+
+# 📊 Datos y Datasets
+data/
+datasets/
+*.csv
+*.xlsx
+!requirements.txt
+!package.json
+
+# PDFs generados (temporal)
+*.pdf
+!docs/*.pdf
+
+# Archivos temporales
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Sistema operativo
+Thumbs.db
+Desktop.ini

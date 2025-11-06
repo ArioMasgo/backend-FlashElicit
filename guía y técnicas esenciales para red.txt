@@ -1,0 +1,141 @@
+guía y técnicas esenciales para redactar Requisitos No Funcionales (RNF) en base a la norma ISO/IEC/IEEE 29148 
+
+✅ 1. Redacción clara, objetiva y verificable
+
+Los RNF deben evitar toda subjetividad.
+Estas son técnicas clave:
+
+a) Utilizar el verbo modal “deberá”
+
+Define obligatoriedad y verificabilidad.
+Ejemplo correcto:
+
+“El servicio de autenticación deberá responder en menos de 2 segundos.”
+
+b) Incluir siempre un sujeto o artefacto técnico definido
+
+Nada de “el sistema”, “deberá cargar rápido”, etc.
+Ejemplo correcto:
+
+“La pantalla de login deberá cargar en menos de 3 segundos.”
+
+c) Evitar ambigüedad y vaguedad
+
+Las palabras prohibidas son:
+
+rápido
+
+fácil
+
+intuitivo
+
+eficiente
+
+óptimo
+
+adecuado
+
+moderno
+
+Se debe reemplazar por métricas observables.
+
+✅ 2. Uso obligatorio de métricas y condiciones observables
+
+Un RNF siempre debe tener criterios medibles. Esto hace que sea posible validarlo.
+
+Ejemplos:
+
+tiempos: < 2 segundos, < 100 ms
+
+porcentajes: 99.9% de disponibilidad
+
+límites: hasta 1000 usuarios concurrentes
+
+estándares: WCAG 2.1 AA, JAWS, NVDA
+
+Tu framework FlashElicit debe detectar si un requisito no tiene métrica → y marcarlo como incompleto.
+
+✅ 3. Fórmula sintáctica estándar
+
+La guía propone una estructura que FlashElicit debe usar para generar RNF:
+
+✅ [Sujeto/artefacto técnico] + deberá + [restricción o condición técnica] + [métrica o criterio]
+
+Ejemplos:
+
+“El servicio de autenticación de usuarios deberá estar disponible el 99.5% del tiempo.”
+
+“La interfaz web de consulta de cuentas deberá cumplir con WCAG 2.1 AA.”
+
+✅ 4. Requisitos deben cumplir el criterio SMART
+
+Tu framework debe validar que cada RNF cumpla con:
+
+Letra	Significado	Técnica aplicada
+S	Específico	Debe indicar artefacto y contexto
+M	Medible	Debe contener una métrica
+A	Alcanzable	Que sea técnicamente posible
+R	Relevante	Contribuya a la calidad del sistema
+T	Temporal	Frecuencia, duración o ventana
+
+Ejemplo SMART:
+“El módulo de pagos deberá estar disponible el 99.9% del tiempo durante el horario de 8:00–20:00.”
+
+✅ 5. Clasificación técnica de RNF (según ISO 29148)
+
+FlashElicit debe etiquetar el RNF en una de estas categorías:
+
+Rendimiento (tiempos, concurrencia, uso de recursos)
+
+Fiabilidad (disponibilidad, recuperación, tolerancia a fallos)
+
+Seguridad (confidencialidad, autenticidad, trazabilidad)-> en nuestro caso es puro seguridad -> asi que ponemos las subcaracterísticas.
+
+Usabilidad (accesibilidad, UX medible)
+
+Mantenibilidad (modularidad, calidad del código, pruebas)
+
+Portabilidad (sistemas, navegadores, dispositivos)
+
+Restricciones tecnológicas (frameworks, SO, lenguajes)
+
+Esto garantiza orden y trazabilidad.
+
+✅ 6. Técnicas de buenas prácticas al redactar
+
+Tu framework debe verificar:
+
+✅ Evitar decisiones de diseño
+
+❌ “Usar botones azules”, “la pantalla debe verse moderna”
+✅ RNF no define UI, solo calidad/métrica.
+
+✅ Especificar el contexto operativo
+
+✔ “durante horario laboral”, “bajo 100 usuarios”, “en Chrome/Firefox”
+
+✅ Mantener trazabilidad
+
+Cada RNF debe enlazar con un requisito funcional si aplica.
+
+✅ 7. Detectar y evitar errores comunes
+
+FlashElicit debe marcar los siguientes errores:
+
+Error	Ejemplo	Corrección
+Vagueza	“El sistema será rápido”	“La API deberá responder en <2s con 100 usuarios.”
+Ambigüedad	“Fácil de usar”	“Completar flujo en ≤3 pasos sin error.”
+Sin sujeto	“Deberá cargar rápido”	“La pantalla de login deberá cargar en <3s.”
+Imprecisión	“Será compatible”	“Compatible con Chrome, Firefox, Safari (2025).”
+✅ Resumen técnico final para tu framework FlashElicit
+
+Tu framework debe garantizar que cada RNF:
+
+✅ 1. Use el verbo “deberá”
+✅ 2. Identifique un artefacto técnico específico
+✅ 3. Incluya métricas cuantificables
+✅ 4. Siga la estructura sintáctica estándar
+✅ 5. Cumpla con el criterio SMART
+✅ 6. Perteneciente a una categoría ISO 29148
+✅ 7. Evite vaguedad, ambigüedad o subjetividad
+✅ 8. Sea trazable, evaluable y verificable
