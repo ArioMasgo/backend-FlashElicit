@@ -59,10 +59,6 @@ htmlcov/
 *.log
 logs/
 
-# 🎯 MODELOS BERT (PESADOS - NO SUBIR)
-# Directorios de modelos completos
-app/models/modelo_bert_binario/
-app/models/modelo_bert_multiclase/
 
 # Archivos de modelos pesados
 *.bin
