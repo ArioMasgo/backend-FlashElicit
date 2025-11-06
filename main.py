@@ -15,10 +15,10 @@ app = FastAPI(
 
 # Configuración de CORS
 origins = [
-    "http://localhost:4200",  # Angular development server
-    "http://127.0.0.1:4200",  # Alternativa localhost
+    #"http://localhost:4200",  # Angular development server
+    #"http://127.0.0.1:4200",  # Alternativa localhost
     # Agrega aquí tu dominio de producción cuando lo tengas
-    # "https://tu-frontend.vercel.app",
+    "https://flashelicit-proyect.vercel.app",
 ]
 
 app.add_middleware(
