@@ -17,7 +17,7 @@ class OpenRouterRequirementsGenerator:
             base_url="https://openrouter.ai/api/v1",
             api_key=os.getenv("OPENROUTER_API_KEY"),
         )
-        self.model = "x-ai/grok-4-fast"
+        self.model = "openai/gpt-5.1"
 
     def _create_prompt(self, comentarios_clasificados: List[Dict]) -> str:
         """
